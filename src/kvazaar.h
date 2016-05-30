@@ -247,6 +247,12 @@ typedef struct kvz_config
 
   enum kvz_cu_split_termination cu_split_termination; /*!< \brief Mode of cu split termination. */
 
+  //*********************************************
+  //For scalable extension. TODO: Move somewhere else?
+  uint8_t layer;
+  uint8_t max_layers;
+  //*********************************************
+
 } kvz_config;
 
 /**
