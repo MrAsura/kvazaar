@@ -178,8 +178,10 @@ static void* input_read_thread(void* in_args)
       goto done;
     }
 
-    frame_in = args->api->picture_alloc(args->opts->config->width  + args->padding_x,
-                                        args->opts->config->height + args->padding_y);
+    // ***********************************************
+  // Modified for SHVC
+    frame_in = args->api->picture_alloc(args->opts->config->in_width  + args->padding_x,
+                                        args->opts->config->in_height + args->padding_y);
 
     if (!frame_in) {
       fprintf(stderr, "Failed to allocate image.\n");
@@ -187,7 +189,7 @@ static void* input_read_thread(void* in_args)
       goto done;
     }
 
-    if (!yuv_io_read(args->input, args->opts->config->width, args->opts->config->height, frame_in)) {
+    if (!yuv_io_read(args->input, args->opts->config->in_width, args->opts->config->in_height, frame_in)) {
       // reading failed
       if (feof(args->input)) {
         // When looping input, re-open the file and re-read data.
@@ -195,7 +197,7 @@ static void* input_read_thread(void* in_args)
           fclose(args->input);
           args->input = fopen(args->opts->input, "rb");
           if (args->input == NULL ||
-              !yuv_io_read(args->input, args->opts->config->width, args->opts->config->height, frame_in))
+              !yuv_io_read(args->input, args->opts->config->in_width, args->opts->config->in_height, frame_in))
           {
             fprintf(stderr, "Could not re-open input file, shutting down!\n");
             retval = RETVAL_FAILURE;
@@ -211,6 +213,7 @@ static void* input_read_thread(void* in_args)
         goto done;
       }
     }
+    // **********************************************
 
     frames_read++;
 
@@ -328,6 +331,10 @@ int main(int argc, char *argv[])
   //TODO: Replace with proper implementation. Move to encoder?
   opts->config->layer = 0;
   opts->config->max_layers = 2;
+  opts->config->el_width = opts->config->in_width = opts->config->width;
+  opts->config->el_height = opts->config->in_height = opts->config->height;
+  opts->config->width /= 2;
+  opts->config->height /= 2;
   /*kvz_encoder *el_enc = api->encoder_open(opts->config);
   if (!el_enc) {
     fprintf(stderr, "Failed to open encoder.\n");
@@ -363,9 +370,12 @@ int main(int argc, char *argv[])
     uint64_t bitstream_length = 0;
     uint32_t frames_done = 0;
     double psnr_sum[3] = { 0.0, 0.0, 0.0 };
-
-    uint8_t padding_x = get_padding(opts->config->width);
-    uint8_t padding_y = get_padding(opts->config->height);
+    
+    // ***********************************************
+    // Modified for SHVC
+    uint8_t padding_x = get_padding(opts->config->in_width);
+    uint8_t padding_y = get_padding(opts->config->in_height);
+    // ***********************************************
 
     pthread_t input_thread;
 
