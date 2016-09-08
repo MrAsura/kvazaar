@@ -1177,8 +1177,12 @@ void kvz_encoder_state_write_bitstream_slice_header(encoder_state_t * const stat
   // TODO: Get proper values.
   if (state->layer->layer_id > 0) {  //&& !default_ref_layers_active_flag && NumDirectRefLayers[nuh_layer_id] > 0 ){
     //default_ref_layers_active_flag == 0; NumDirectRefLayers[1] == 1
-    WRITE_U(stream, 0, 1, "inter_layer_pred_enabled_flag");
-    //TODO: if inter_layer_pred_enabled_flag == 1 Write other stuff 
+    uint8_t inter_layer_pred_enabled_flag = state->global->slicetype != KVZ_SLICE_I; //TODO: A better way?
+    WRITE_U(stream, inter_layer_pred_enabled_flag, 1, "inter_layer_pred_enabled_flag");
+    
+    if( inter_layer_pred_enabled_flag /* && NumDirectRefLayers[nu_layer_id] > 1 */) {
+      //TODO: Write stuff if there are more than one inter layer ref for this slice
+    }
   }
   //***********************************************
 

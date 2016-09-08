@@ -511,10 +511,13 @@ int kvazaar_scalable_encode(kvz_encoder* enc, kvz_picture* pic_in, kvz_data_chun
       encoder_state_t *bl_state = &enc->states[*cur_el_state_num]; //Should return the bl state with the same poc as state.
       assert(state->global->poc == bl_state->global->poc);
       //TODO: Add upscaling, Handle memory leak of kvz_cu_array_?
-      kvz_image_list_add(state->global->ref,
-                         kvazaar_scaling(bl_state->tile->frame->rec, &enc->upscaling[layer_id_minus1 + 1]),
-                         bl_state->tile->frame->cu_array, //kvz_cu_array_alloc(enc->upscaling[layer_id_minus1 + 1].trgt_width, enc->upscaling[layer_id_minus1 + 1].trgt_height),
-                         bl_state->global->poc);//bl_state->tile->frame->cu_array, bl_state->global->poc );
+      //Skip on first frame?
+      if (state->global->frame > 0) {
+        kvz_image_list_add(state->global->ref,
+                           kvazaar_scaling(bl_state->tile->frame->rec, &enc->upscaling[layer_id_minus1 + 1]),
+                           bl_state->tile->frame->cu_array, //kvz_cu_array_alloc(enc->upscaling[layer_id_minus1 + 1].trgt_width, enc->upscaling[layer_id_minus1 + 1].trgt_height),
+                           bl_state->global->poc);//bl_state->tile->frame->cu_array, bl_state->global->poc );//
+      }
     }
 
     if (l_pic_in != NULL) {
