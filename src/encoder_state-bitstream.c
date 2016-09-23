@@ -376,7 +376,7 @@ static void encoder_state_write_bitsream_vps_extension(bitstream_t* stream,
   WRITE_UE(stream, direct_dep_type_len_minus2, "direct_dep_type_len_minus2");
   WRITE_U(stream, 1, 1, "direct_dependency_all_layers_flag");
   //if "direct_dependency_all_layers_flag"
-  WRITE_U(stream, 2, direct_dep_type_len_minus2+2, "direct_dependency_all_layers_type"); //Value 2 used in SHM. TODO: find out why
+  WRITE_U(stream, 0, direct_dep_type_len_minus2+2, "direct_dependency_all_layers_type"); //Value 2 used in SHM. 0: Only use IL sample prediction, 1: Only use IL Motion prediction, 2: Use both
   //Else write separately for each layer
 
   WRITE_UE(stream, 0, "vps_non_vui_extension_length");
@@ -628,6 +628,80 @@ static void encoder_state_write_bitstream_VUI(bitstream_t *stream,
   //ENDIF
 }
 
+//*******************************************
+//For scalability extension. TODO: remove if pointless
+void writeSTermRSet(encoder_state_t* const state)
+{
+  const encoder_control_t* const encoder = state->encoder_control;
+  bitstream_t* const stream = &state->stream;
+  int j;
+  int ref_negative = state->encoder_control->cfg->ref_frames;
+  int ref_positive = 0;
+  
+  //TODO: Make a better implementation
+  //if( ref_negative > 0 && state->global->ref->pocs[state->global->ref->used_size-1] == state->global->poc) --ref_negative;
+
+  int last_poc = 0;
+  int poc_shift = 0;
+
+  WRITE_UE(stream, ref_negative, "num_negative_pics");
+  WRITE_UE(stream, ref_positive, "num_positive_pics");
+  for (j = 0; j < ref_negative; j++) {
+    int8_t delta_poc = 0;
+
+    if (encoder->cfg->gop_len) {
+      int8_t found = 0;
+      do {
+        delta_poc = encoder->cfg->gop[state->global->gop_offset].ref_neg[j + poc_shift];
+        for (int i = 0; i < state->global->ref->used_size; i++) {
+          if (state->global->ref->pocs[i] == state->global->poc - delta_poc) {
+            found = 1;
+            break;
+          }
+        }
+        if (!found) poc_shift++;
+        if (j + poc_shift == ref_negative) {
+          fprintf(stderr, "Failure, reference not found!");
+          exit(EXIT_FAILURE);
+        }
+      } while (!found);
+    }
+
+    WRITE_UE(stream, encoder->cfg->gop_len?delta_poc - last_poc - 1:0, "delta_poc_s0_minus1");
+    last_poc = delta_poc;
+    WRITE_U(stream,1,1, "used_by_curr_pic_s0_flag");
+  }
+  last_poc = 0;
+  poc_shift = 0;
+  for (j = 0; j < ref_positive; j++) {
+    int8_t delta_poc = 0;
+
+    if (encoder->cfg->gop_len) {
+      int8_t found = 0;
+      do {
+        delta_poc = encoder->cfg->gop[state->global->gop_offset].ref_pos[j + poc_shift];
+        for (int i = 0; i < state->global->ref->used_size; i++) {
+          if (state->global->ref->pocs[i] == state->global->poc + delta_poc) {
+            found = 1;
+            break;
+          }
+        }
+        if (!found) poc_shift++;
+        if (j + poc_shift == ref_positive) {
+          fprintf(stderr, "Failure, reference not found!");
+          exit(EXIT_FAILURE);
+        }
+      } while (!found);
+    }
+
+    WRITE_UE(stream, encoder->cfg->gop_len ? delta_poc - last_poc - 1 : 0, "delta_poc_s1_minus1");
+    last_poc = delta_poc;
+    WRITE_U(stream, 1, 1, "used_by_curr_pic_s1_flag");
+  }
+}
+
+//*******************************************
+  
 static void encoder_state_write_bitstream_seq_parameter_set(bitstream_t* stream,
   encoder_state_t * const state)
 {
@@ -741,7 +815,7 @@ static void encoder_state_write_bitstream_seq_parameter_set(bitstream_t* stream,
       encoder_state_write_bitstream_scaling_list(stream, state);
     }
   }
-//*******************************************  
+
   WRITE_U(stream, (encoder->cfg->amp_enable ? 1 : 0), 1, "amp_enabled_flag");
 
   WRITE_U(stream, encoder->sao_enable ? 1 : 0, 1,
@@ -755,11 +829,15 @@ static void encoder_state_write_bitstream_seq_parameter_set(bitstream_t* stream,
     WRITE_U(stream, 1, 1, "pcm_loop_filter_disable_flag");
   #endif
 
-  WRITE_UE(stream, 0, "num_short_term_ref_pic_sets");
+  uint8_t ref_sets = 0;//state->layer->max_layers > 1 ? 1 : 0; //TODO: remove
+  WRITE_UE(stream, ref_sets, "num_short_term_ref_pic_sets");
 
   //IF num short term ref pic sets
+  if(ref_sets) writeSTermRSet(state);
   //ENDIF
 
+
+//*******************************************  
   WRITE_U(stream, 0, 1, "long_term_ref_pics_present_flag");
 
   //IF long_term_ref_pics_present
@@ -1053,6 +1131,8 @@ static void encoder_state_write_bitstream_entry_points_write(bitstream_t * const
 
 void kvz_encoder_state_write_bitstream_slice_header(encoder_state_t * const state)
 {
+  // ***********************************************
+  // Modified for SHVC
   const encoder_control_t * const encoder = state->encoder_control;
   bitstream_t * const stream = &state->stream;
   int j;
@@ -1067,7 +1147,10 @@ void kvz_encoder_state_write_bitstream_slice_header(encoder_state_t * const stat
       }
     }
   } else ref_negative = state->global->ref->used_size;
-
+  //TODO: Make a better implementation
+  //if( ref_negative > 0 && state->global->ref->pocs[state->global->ref->used_size-1] == state->global->poc) --ref_negative;
+  // ***********************************************
+  
 #ifdef KVZ_DEBUG
   printf("=========== Slice ===========\n");
 #endif
@@ -1111,7 +1194,9 @@ void kvz_encoder_state_write_bitstream_slice_header(encoder_state_t * const stat
 
     //WRITE_U(stream, state->global->poc & 0x1f, 5, "pic_order_cnt_lsb");
 //***********************************************
-      WRITE_U(stream, 0, 1, "short_term_ref_pic_set_sps_flag");
+    uint8_t ref_sets = 0;//state->layer->max_layers > 1 ? 1 : 0; //TODO: Remove if pointless
+      WRITE_U(stream, ref_sets, 1, "short_term_ref_pic_set_sps_flag");
+      if(ref_sets==0){
       WRITE_UE(stream, ref_negative, "num_negative_pics");
       WRITE_UE(stream, ref_positive, "num_positive_pics");
     for (j = 0; j < ref_negative; j++) {      
@@ -1167,6 +1252,7 @@ void kvz_encoder_state_write_bitstream_slice_header(encoder_state_t * const stat
       WRITE_U(stream, 1, 1, "used_by_curr_pic_s1_flag");
     }
     //WRITE_UE(stream, 0, "short_term_ref_pic_set_idx");
+  }
   }
 
     //end if
