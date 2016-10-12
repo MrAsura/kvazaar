@@ -1158,8 +1158,12 @@ static void encode_inter_prediction_unit(encoder_state_t * const state,
         }
 
         if (!(/*pcCU->getSlice()->getMvdL1ZeroFlag() &&*/ state->global->ref_list == REF_PIC_LIST_1 && cur_cu->inter.mv_dir == 3)) {
+          // ***********************************************
+          // Modified for SHVC. TODO: Move this somewhere better
+          //Ref_list_idx==1 should contain the ILR ref that needs to be set to zero. TODO: Proper implementation
           const int32_t mvd_hor = cur_cu->inter.mvd[ref_list_idx][0];
           const int32_t mvd_ver = cur_cu->inter.mvd[ref_list_idx][1];
+          // ***********************************************
           const int8_t hor_abs_gr0 = mvd_hor != 0;
           const int8_t ver_abs_gr0 = mvd_ver != 0;
           const uint32_t mvd_hor_abs = abs(mvd_hor);

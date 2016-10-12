@@ -633,7 +633,17 @@ void kvz_inter_get_mv_cand(const encoder_state_t * const state,
   kvz_inter_get_spatial_merge_candidates(x, y, width, height, &b0, &b1, &b2, &a0, &a1, lcu);
   
 //*********************************************
-//For scalable extension. TODO: Interlayer mv cands need to be set to 0 (td==0?). Move check to somewhere else?
+//For scalable extension. TODO: Interlayer mv cands need to be set to 0 (td==0?). Move check to somewhere else? Don't even search for cands?
+
+  //If we have a IRL ref then we need to set motion cand to 0
+  if(state->layer->layer_id > 0 && (state->global->poc == state->global->ref->pocs[cur_cu->inter.mv_ref[reflist]]) ) {
+    while (candidates < AMVP_MAX_NUM_CANDS) {
+    mv_cand[candidates][0] = 0;
+    mv_cand[candidates][1] = 0;
+    candidates++;
+  }
+    return;
+  }
 #define CALCULATE_SCALE(cu,tb,td) ((tb * ((0x4000 + (abs(td)>>1))/td) + 32) >> 6)
 #define APPLY_MV_SCALING(cu, cand, list) {int td = state->global->poc - state->global->ref->pocs[(cu)->inter.mv_ref[list]];\
                                    int tb = state->global->poc - state->global->ref->pocs[cur_cu->inter.mv_ref[reflist]];\
