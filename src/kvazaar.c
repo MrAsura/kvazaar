@@ -549,6 +549,7 @@ int kvazaar_scalable_encode(kvz_encoder* enc, kvz_picture* pic_in, kvz_data_chun
       assert(state->global->frame == *el_frames_started);
       // Start encoding.
       kvz_encode_one_frame(state);
+
       *el_frames_started += 1;
     }
 
