@@ -1106,14 +1106,16 @@ static void encode_inter_prediction_unit(encoder_state_t * const state,
     uint32_t ref_list_idx;
     uint32_t j;
     int ref_list[2] = { 0, 0 };
+    // Modified for SHVC. TODO: A better way?
+    // ***********************************************
     for (j = 0; j < state->global->ref->used_size; j++) {
-      if (state->global->ref->pocs[j] < state->global->poc) {
+      if (state->global->ref->pocs[j] <= state->global->poc) {
         ref_list[0]++;
       } else {
         ref_list[1]++;
       }
     }
-
+    // ***********************************************
     // Void TEncSbac::codeInterDir( TComDataCU* pcCU, UInt uiAbsPartIdx )
     if (state->global->slicetype == KVZ_SLICE_B)
     {

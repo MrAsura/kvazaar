@@ -1267,6 +1267,8 @@ static void search_pu_inter_ref(const encoder_state_t * const state,
   else {
     //Calc cost for 0-mv. TODO: Better cost calc check?
     //TODO: Enough to use get_mvd_cost? 
+    //temp_cost += 1;
+    //temp_cost += INT_MAX - 1;
     temp_cost += kvz_image_calc_sad(frame->source, ref_image, orig.x, orig.y,
                                     state->tile->lcu_offset_x * LCU_WIDTH + orig.x,
                                     state->tile->lcu_offset_y * LCU_WIDTH + orig.y,
