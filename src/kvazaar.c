@@ -159,7 +159,7 @@ static kvz_encoder * kvazaar_open(const kvz_config *cfg)
     //uint8_t padding_x = (CU_MIN_SIZE_PIXELS - cfg->in_width % CU_MIN_SIZE_PIXELS) % CU_MIN_SIZE_PIXELS;
     //uint8_t padding_y = (CU_MIN_SIZE_PIXELS - cfg->in_height % CU_MIN_SIZE_PIXELS) % CU_MIN_SIZE_PIXELS;
     encoder->downscaling[0] = newScalingParameters(cfg->in_width,cfg->in_height,encoder->control->in.real_width,encoder->control->in.real_height,CHROMA_420); //TODO: get proper width/height for each layer from cfg etc.
-    encoder->upscaling[0] = newScalingParameters(encoder->control->in.width,encoder->control->in.height,encoder->control->in.real_width,encoder->control->in.real_height,CHROMA_420);
+    encoder->upscaling[0] = newScalingParameters(encoder->control->in.width,encoder->control->in.height,encoder->control->in.width,encoder->control->in.height,CHROMA_420);
   }
   else {
     encoder->el_control = NULL;
