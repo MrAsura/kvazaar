@@ -103,7 +103,7 @@ static void encoder_state_write_bitstream_vid_parameter_set(bitstream_t* stream,
   WRITE_U(stream, 0, 4, "vps_video_parameter_set_id");
   WRITE_U(stream, 3, 2, "vps_reserved_three_2bits" );
   WRITE_U(stream, 0, 6, "vps_reserved_zero_6bits" );
-  WRITE_U(stream, 1, 3, "vps_max_sub_layers_minus1");
+  WRITE_U(stream, 6, 3, "vps_max_sub_layers_minus1");
   WRITE_U(stream, 0, 1, "vps_temporal_id_nesting_flag");
   WRITE_U(stream, 0xffff, 16, "vps_reserved_ffff_16bits");
 
@@ -949,8 +949,10 @@ static void encoder_state_write_bitstream_main(encoder_state_t * const state)
   }
 
   {
+    static int tid = 0;
+    int tids[] = {0,3,2,3,1,3,2,3};
     uint8_t nal_type = (state->frame->is_idr_frame ? KVZ_NAL_IDR_W_RADL : KVZ_NAL_TRAIL_R);
-    kvz_nal_write(stream, nal_type, 0, first_nal_in_au);
+    kvz_nal_write(stream, nal_type, tids[(tid++)%8], first_nal_in_au);
   }
 
   {

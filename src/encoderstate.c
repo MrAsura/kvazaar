@@ -974,7 +974,7 @@ static void encoder_state_init_new_frame(encoder_state_t * const state, kvz_pict
   } else {
     bool is_i_idr = (cfg->intra_period == 1 && state->frame->num % 2 == 0);
     bool is_p_idr = (cfg->intra_period > 1 && (state->frame->num % cfg->intra_period) == 0);
-    state->frame->is_idr_frame = is_i_idr || is_p_idr;
+    state->frame->is_idr_frame = (is_i_idr || is_p_idr) && (state->frame->num % 8) == 0;
   }
  
   if (state->frame->is_idr_frame) {
