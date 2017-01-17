@@ -844,7 +844,10 @@ static void add_checksum(encoder_state_t * const state)
   const videoframe_t * const frame = state->tile->frame;
   unsigned char checksum[3][SEI_HASH_MAX_LENGTH];
 
-  kvz_nal_write(stream, KVZ_NAL_SUFFIX_SEI_NUT, 0, 0);
+  static int tid = 0;
+  int tids[] = {0,3,2,3,1,3,2,3};
+
+  kvz_nal_write(stream, KVZ_NAL_SUFFIX_SEI_NUT, tids[(tid++)%8], 0);
 
   WRITE_U(stream, 132, 8, "sei_type");
 
