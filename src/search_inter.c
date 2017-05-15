@@ -1239,16 +1239,16 @@ static void search_pu_inter_ref(encoder_state_t * const state,
   int8_t merge_idx = 0;
   int8_t ref_list = state->frame->refmap[ref_idx].list-1;
   int8_t temp_ref_idx = cur_cu->inter.mv_ref[ref_list];
+  
+  //*********************************************
+  //For scalable extension. TODO: A better way to check if ILR? Properly do cand stuff
+  bool is_ILR = state->frame->poc == state->frame->ref->pocs[ref_idx];
+  
   // Get MV candidates
   cur_cu->inter.mv_ref[ref_list] = ref_idx;
   kvz_inter_get_mv_cand(state, x, y, width, height, mv_cand, cur_cu, lcu, ref_list);
   cur_cu->inter.mv_ref[ref_list] = temp_ref_idx;
 
-  //*********************************************
-  //For scalable extension. TODO: A better way to check if ILR?
-
-  bool is_ILR = state->frame->poc == state->frame->ref->pocs[ref_idx];
-  
 
   vector2d_t mv = { 0, 0 };
   //Skip for ILR (bitsream requires 0-mv for ILR)

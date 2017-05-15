@@ -306,8 +306,7 @@ static void encoder_state_write_bitsream_vps_extension(bitstream_t* stream,
     const encoder_control_t* encoder = state->encoder_control;
     for (int i = 0; i <= vps_num_rep_formats_minus1; i++) {
     //rep_format(){  
-      //unsigned shift = i==0?0:1; //TODO: remove. Only for quick testing.
-      //unsigned offset = i==0?0:8; //TODO: remove. Only for quick testing.
+
       WRITE_U(stream, encoder->in.width, 16, "pic_width_vps_in_luma_samples");
       WRITE_U(stream, encoder->in.height, 16, "pic_height_vps_in_luma_samples");
 

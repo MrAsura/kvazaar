@@ -558,6 +558,10 @@ static double search_cu(encoder_state_t * const state, int x, int y, int depth, 
           work_tree_copy_up(x, y, depth, work_tree);
         }
       }
+      //*********************************************
+      //For scalable extension. TODO: Do ILR search here
+      
+      //*********************************************
     }
 
     // Try to skip intra search in rd==0 mode.
