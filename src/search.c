@@ -558,10 +558,6 @@ static double search_cu(encoder_state_t * const state, int x, int y, int depth, 
           work_tree_copy_up(x, y, depth, work_tree);
         }
       }
-      //*********************************************
-      //For scalable extension. TODO: Do ILR search here
-      
-      //*********************************************
     }
 
     // Try to skip intra search in rd==0 mode.
@@ -584,6 +580,11 @@ static double search_cu(encoder_state_t * const state, int x, int y, int depth, 
         cur_cu->intra.mode = intra_mode;
       }
     }
+
+    //*********************************************
+    //For scalable extension. TODO: Do ILR search here?
+    
+    //*********************************************
 
     // Reconstruct best mode because we need the reconstructed pixels for
     // mode search of adjacent CUs.
